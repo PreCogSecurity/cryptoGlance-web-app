@@ -4,6 +4,7 @@ user_data/dev/*
 user_data/fiat/*
 user_data/pools/*
 user_data/wallets/*
+user_data/logs/*
 pure-assets/
 vectorstock/
 .idea/
@@ -13,3 +14,11 @@ Thumbs.db
 example-*.*
 node_modules
 .DS_Store
+
+# Local environment / secrets - never commit
+.env
+
+# Composer dependencies and tooling caches
+/vendor/
+.phpunit.cache/
+.phpunit.result.cache

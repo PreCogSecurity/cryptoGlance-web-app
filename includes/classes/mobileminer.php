@@ -16,8 +16,10 @@ class MobileMiner {
     protected $_username = '';
     protected $_appKey = '';
 
-    // cryptoGlance Specific
-    protected $_apiKey = 'ozhjiY941gooFo';
+    // cryptoGlance Specific application key. NEVER hardcode this: it is read
+    // from the MOBILEMINER_API_KEY environment variable (see .env.example),
+    // with a settings.json override for upgrades from older releases.
+    protected $_apiKey = '';
 
     // API Specific
     protected $_url = 'https://api.mobileminerapp.com/';
@@ -27,16 +29,30 @@ class MobileMiner {
     protected $_rigs = array();
 
     public function __construct() {
-        $this->_username = $GLOBALS['settings']['general']['mobileminer']['username'];
-        $this->_appKey = $GLOBALS['settings']['general']['mobileminer']['appkey'];
-        $this->_urlParams = '?apiKey='.$this->_apiKey . '&emailAddress='.$this->_username . '&applicationKey='.$this->_appKey;
+        $this->_apiKey = (string) cg_env('MOBILEMINER_API_KEY', '');
+        if ($this->_apiKey === ''
+            && !empty($GLOBALS['settings']['general']['mobileminer']['apikey'])) {
+            // Backward compatibility: key stored via Settings on older releases.
+            $this->_apiKey = (string) $GLOBALS['settings']['general']['mobileminer']['apikey'];
+        }
+        $this->_username = isset($GLOBALS['settings']['general']['mobileminer']['username'])
+            ? $GLOBALS['settings']['general']['mobileminer']['username'] : '';
+        $this->_appKey = isset($GLOBALS['settings']['general']['mobileminer']['appkey'])
+            ? $GLOBALS['settings']['general']['mobileminer']['appkey'] : '';
+        $this->_urlParams = '?apiKey='. urlencode($this->_apiKey) .'&emailAddress='. urlencode($this->_username) .'&applicationKey='. urlencode($this->_appKey);
         $this->_rigs = new Rigs();
     }
 
     // The app will simply update all the device data to the mobileminer api
     public function getUpdate() {
         // Do nothing if it's not enabled
-        if (!$GLOBALS['settings']['general']['mobileminer']['enabled']) {
+        if (empty($GLOBALS['settings']['general']['mobileminer']['enabled'])) {
+            return;
+        }
+
+        // Without an application key there is nothing safe to send; refuse to
+        // report rather than fall back to any baked-in credential.
+        if ($this->_apiKey === '' || $this->_username === '' || $this->_appKey === '') {
             return;
         }
 

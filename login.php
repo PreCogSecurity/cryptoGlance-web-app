@@ -10,11 +10,14 @@ if (!empty($_SESSION['login_string'])) {
 require_once('includes/classes/login.php');
 $loginObj = new Login();
 if (!empty($_POST['username']) && !empty($_POST['password'])) {
-    
-    if ($loginObj->login(trim($_POST['username']), trim($_POST['password'])) !== FALSE) {
+
+    // Only an explicit true may establish a session; Login::login() also
+    // returns the string 'throttled' during brute-force lockouts.
+    $loginResult = $loginObj->login(trim($_POST['username']), trim($_POST['password']));
+    if ($loginResult === true) {
         $_SESSION['login_string'] = hash('sha512', $_POST['password'] . $_SERVER['HTTP_USER_AGENT']);
-                
-        session_regenerate_id(); // This hangs sometimes and we dont know why...
+
+        session_regenerate_id(true); // Prevent session fixation.
         session_write_close();
         header('Location: index.php');
         exit();

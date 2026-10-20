@@ -1,0 +1,61 @@
+<?xml version="1.0"?>
+<ruleset name="cryptoGlance">
+    <description>
+        Focused security and correctness rules for cryptoGlance first-party
+        code. This is intentionally not a full PSR-12 sweep of a PHP 5-era
+        codebase; it pins the invariants we rely on (no execution functions,
+        no dead debug constructs) so regressions fail CI.
+    </description>
+
+    <file>includes</file>
+    <file>ajax.php</file>
+    <file>index.php</file>
+    <file>login.php</file>
+    <file>logout.php</file>
+    <file>rig.php</file>
+    <file>settings.php</file>
+    <file>wallet.php</file>
+    <file>update.php</file>
+    <file>debug.php</file>
+    <file>help.php</file>
+
+    <exclude-pattern>*/vendor/*</exclude-pattern>
+    <exclude-pattern>*/Michelf/*</exclude-pattern>
+    <exclude-pattern>*/includes/simplepie*</exclude-pattern>
+    <exclude-pattern>*/includes/classes/class.phpmailer.php</exclude-pattern>
+    <exclude-pattern>*/user_data/*</exclude-pattern>
+    <exclude-pattern>*/tests/*</exclude-pattern>
+    <!-- Debug console legitimately prints raw miner payloads; static HTML
+         fragment with no PHP code. -->
+    <exclude-pattern>*/debug.php</exclude-pattern>
+    <exclude-pattern>*/includes/menu-active_panels.php</exclude-pattern>
+
+    <!-- No shell/code execution entry points in first-party code. -->
+    <rule ref="Generic.PHP.ForbiddenFunctions">
+        <properties>
+            <property name="forbiddenFunctions" type="array">
+                <element key="eval" value="null"/>
+                <element key="exec" value="null"/>
+                <element key="passthru" value="null"/>
+                <element key="shell_exec" value="null"/>
+                <element key="proc_open" value="null"/>
+                <element key="popen" value="null"/>
+                <element key="pcntl_exec" value="null"/>
+                <element key="assert" value="null"/>
+                <element key="create_function" value="null"/>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- No leftover debugging constructs. -->
+    <rule ref="Squiz.PHP.DiscouragedFunctions">
+        <properties>
+            <property name="forbiddenFunctions" type="array">
+                <element key="debug_backtrace" value="null"/>
+                <element key="print_r" value="null"/>
+                <element key="var_dump" value="null"/>
+                <element key="debug_zval_dump" value="null"/>
+            </property>
+        </properties>
+    </rule>
+</ruleset>

@@ -103,9 +103,73 @@ cryptoGlance is an open-source, self-hosted PHP webapp providing you with a glan
 
 *Running from source:*
 
-- PHP v5.2+
-- Apache / IIS / mongoose, or whichever web server you prefer
-- php_sockets extension enabled in PHP
+- PHP v7.4+ (PHP 8.x recommended)
+- Apache / IIS / nginx, or whichever web server you prefer
+- PHP extensions: `sockets`, `curl`, `json`
+- [Composer](https://getcomposer.org/) for dependency management
+
+<br>
+
+---
+
+### Running with Docker (recommended for a fresh clone):
+
+The fastest way to get a working instance is Docker Compose. It builds a
+PHP 8.3 + Apache image, installs dependencies, and persists your settings in a
+named volume.
+
+1. Copy the environment template and adjust it:
+
+       cp .env.example .env
+
+2. Build and start:
+
+       docker compose up --build
+
+3. Open <http://localhost:8080> and set your username + password on first login.
+
+Runtime state (settings, caches, logs) lives in the `cryptoglance_data` volume,
+so `docker compose down` / `up` cycles do not lose your configuration.
+
+<br>
+
+---
+
+### Development & testing:
+
+Dependencies are managed with Composer and pinned by `composer.lock`:
+
+    composer install
+
+Run the test suite (PHPUnit):
+
+    composer test
+    # or: vendor/bin/phpunit --testdox
+
+Lint / security sniff (PHP_CodeSniffer):
+
+    vendor/bin/phpcs
+
+Both commands run automatically in CI (`.github/workflows/ci.yml`) on every
+push and pull request, alongside a syntax check of every PHP file and a
+hardcoded-secret scan.
+
+<br>
+
+---
+
+### Environment variables:
+
+Configuration that must not live in source is read from the environment (a
+project-root `.env` file is loaded automatically; real environment variables
+always take precedence). See `.env.example`:
+
+| Variable | Purpose | Default |
+| --- | --- | --- |
+| `MOBILEMINER_API_KEY` | MobileMiner reporting application key. Leave empty to disable reporting. | *(empty)* |
+| `CG_DEBUG` | `1` shows PHP errors in the browser. Development only. | `0` |
+| `CG_INSECURE_TLS` | `1` disables TLS certificate verification for outbound calls. Only for a trusted local mirror. | `0` |
+| `CG_HTTP_TIMEOUT` | Timeout (seconds) for outbound HTTP requests. | `20` |
 
 <br>
 
@@ -115,7 +179,7 @@ cryptoGlance is an open-source, self-hosted PHP webapp providing you with a glan
 
 _**Advanced Users:**_
 
-Simply setup a new PHP instance and point it to the root folder of the <a href="https://github.com/cryptoGlance/cryptoGlance-web-app" rel="external">cryptoGlance source/download</a>. Ensure that the **php_sockets** extension is enabled in **php.ini**, grant write access to the **/user_data** folder, and you should be good to go.
+Simply setup a new PHP instance and point it to the root folder of the <a href="https://github.com/cryptoGlance/cryptoGlance-web-app" rel="external">cryptoGlance source/download</a>. Run `composer install`, ensure that the **php_sockets** extension is enabled in **php.ini**, grant write access to the **/user_data** folder, and you should be good to go.
 
 <br>
 
