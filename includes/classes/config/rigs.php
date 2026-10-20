@@ -33,36 +33,55 @@ class Config_Rigs extends Config_Abstract {
 
     // validate posted data for rig
     protected function postValidate($dataType, $data) {
-        // TO-DO: Rethink this... Maybe some kind of validator class that returns true/false
-
         if ($dataType == 'details' &&
             (empty($data['ip_address']) || empty($data['port']))
         ) {
             header("HTTP/1.0 406 Not Acceptable"); // not accepted
             return 'Missing ' . (empty($data['ip_address']) ? 'IP Address' : 'Port');
         } else if ($dataType == 'thresholds') {
-            if ($data['temps']['enabled'] == 'on' &&
-            (empty($data['temps']['warning']) || empty($data['temps']['danger']))
-            ) {
+            // Missing sections are treated as disabled; never read keys that
+            // may be absent (PHP 8 throws warnings on undefined offsets).
+            $tempsEnabled = !empty($data['temps']['enabled']);
+            $hwEnabled = !empty($data['hwErrors']['enabled']);
+
+            if ($tempsEnabled && (empty($data['temps']['warning']) || empty($data['temps']['danger']))) {
                 header("HTTP/1.0 406 Not Acceptable"); // not accepted
                 return 'Temperature Warning and Danager values must be set!';
-            } else if ($data['hwErrors']['enabled'] == 'on' && empty($data['hwErrors']['type'])) {
-                header("HTTP/1.0 406 Not Acceptable"); // not accepted
-                return 'Hardware errors require a Percent or Integer display type!';
-            } else if ($data['hwErrors']['enabled'] == 'on' && $data['hwErrors']['type'] == 'int' &&
-                (empty($data['hwErrors']['warning']['int']) || empty($data['hwErrors']['danger']['int']))
+            }
+            if ($hwEnabled) {
+                if (empty($data['hwErrors']['type'])) {
+                    header("HTTP/1.0 406 Not Acceptable"); // not accepted
+                    return 'Hardware errors require a Percent or Integer display type!';
+                }
+                if ($data['hwErrors']['type'] == 'int' &&
+                    (empty($data['hwErrors']['warning']['int']) || empty($data['hwErrors']['danger']['int']))
+                ) {
+                    header("HTTP/1.0 406 Not Acceptable"); // not accepted
+                    return 'An integer value must be set!';
+                }
+                if ($data['hwErrors']['type'] == 'percent' &&
+                    (empty($data['hwErrors']['warning']['percent']) || empty($data['hwErrors']['danger']['percent']))
+                ) {
+                    header("HTTP/1.0 406 Not Acceptable"); // not accepted
+                    return 'An percent value must be set!';
+                }
+            }
+
+            // Cross-checks apply only to thresholds that are actually enabled.
+            if ($hwEnabled && $data['hwErrors']['type'] == 'percent' &&
+                (float) $data['hwErrors']['warning']['percent'] >= (float) $data['hwErrors']['danger']['percent']
             ) {
                 header("HTTP/1.0 406 Not Acceptable"); // not accepted
-                return 'An integer value must be set!';
-            } else if ($data['hwErrors']['enabled'] == 'on' && $data['hwErrors']['type'] == 'percent' &&
-                (empty($data['hwErrors']['warning']['percent']) || empty($data['hwErrors']['danger']['percent']))
+                return 'Warning setting <b>cannot</b> be a higher value than your danger setting.';
+            }
+            if ($hwEnabled && $data['hwErrors']['type'] == 'int' &&
+                (int) $data['hwErrors']['warning']['int'] >= (int) $data['hwErrors']['danger']['int']
             ) {
                 header("HTTP/1.0 406 Not Acceptable"); // not accepted
-                return 'An percent value must be set!';
-            } else if (
-                ($data['hwErrors']['warning']['percent'] >= $data['hwErrors']['danger']['percent']) ||
-                ($data['hwErrors']['warning']['int'] >= $data['hwErrors']['danger']['int']) ||
-                ($data['temps']['warning'] >= $data['temps']['danger'])
+                return 'Warning setting <b>cannot</b> be a higher value than your danger setting.';
+            }
+            if ($tempsEnabled &&
+                (float) $data['temps']['warning'] >= (float) $data['temps']['danger']
             ) {
                 header("HTTP/1.0 406 Not Acceptable"); // not accepted
                 return 'Warning setting <b>cannot</b> be a higher value than your danger setting.';

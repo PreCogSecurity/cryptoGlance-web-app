@@ -17,11 +17,23 @@ class Config_Pools extends Config_Abstract {
 
     protected function add($pool) {
 
-        if (empty($pool['type'])) {
+        if (empty($pool['type']) || !is_string($pool['type'])) {
             return false;
         }
 
-        $class = 'Pools_' . ucwords(strtolower($pool['type']));
+        // Only shipped pool integrations may be instantiated. The type must
+        // be a plain class-name token and resolve to a Pools_Abstract
+        // subclass; anything else (paths, unknown names) is rejected.
+        $type = strtolower($pool['type']);
+        if (!preg_match('/^[a-z][a-z0-9]*$/', $type)) {
+            return false;
+        }
+
+        $class = 'Pools_' . ucwords($type);
+        if (!class_exists($class) || !is_subclass_of($class, 'Pools_Abstract')) {
+            return false;
+        }
+
         $obj = new $class($pool);
         $this->_objs[] = $obj;
     }

@@ -7,19 +7,23 @@ class Config_Abstract {
 
     // Data
     protected $_fileHandler;
-    protected $_data;
+    protected $_data = array();
 
-    // Objects
-    private $_objs;
+    // Objects (protected so subclasses such as Rigs/Pools/Wallets share one
+    // store instead of silently shadowing this with dynamic properties).
+    protected $_objs = array();
 
     public function __construct() {
         $this->_fileHandler = new FileHandler($this->_config);
-        $this->_data = json_decode($this->_fileHandler->read(), true);
+        $decoded = json_decode($this->_fileHandler->read(), true);
+        $this->_data = is_array($decoded) ? $decoded : array();
 
         if (isset($_GET['id']) || isset($_POST['id'])) {
             $id = (isset($_GET['id']) ? $_GET['id'] : $_POST['id']);
             $id = intval($id)-1;
-            $this->add($this->_data[$id]);
+            if (isset($this->_data[$id])) {
+                $this->add($this->_data[$id]);
+            }
         } else if (!empty($this->_data)) {
             foreach ($this->_data as $id => $obj) {
                 $this->add($obj);

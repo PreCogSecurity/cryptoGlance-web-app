@@ -1,0 +1,14 @@
+.git
+.github
+vendor
+node_modules
+user_data/configs
+user_data/logs
+user_data/dev
+*.bak
+.env
+phpunit.xml
+.phpunit.cache
+.phpunit.result.cache
+tests
+phpcs.xml

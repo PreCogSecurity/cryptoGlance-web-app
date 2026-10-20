@@ -1,8 +1,20 @@
 services:
   app:
     build: .
+    image: cryptoglance-web-app:local
     ports:
-      - "8080:8080"
+      - "8080:80"
+    environment:
+      # Secrets and tunables are injected here, never baked into the image.
+      # Copy .env.example to .env and adjust, or set these in your orchestrator.
+      MOBILEMINER_API_KEY: "${MOBILEMINER_API_KEY:-}"
+      CG_DEBUG: "${CG_DEBUG:-0}"
+      CG_INSECURE_TLS: "${CG_INSECURE_TLS:-0}"
+      CG_HTTP_TIMEOUT: "${CG_HTTP_TIMEOUT:-20}"
     volumes:
-      - .:/app
-    working_dir: /app
+      # Persist settings, caches and logs across container rebuilds.
+      - cryptoglance_data:/var/www/html/user_data
+    restart: unless-stopped
+
+volumes:
+  cryptoglance_data:

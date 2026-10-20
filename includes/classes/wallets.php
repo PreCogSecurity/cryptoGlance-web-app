@@ -50,6 +50,14 @@ class Wallets extends Config_Wallets {
     public function getUpdate() {
         $data = array();
         foreach ($this->_objs as $wallet) {
+            // Skip wallets whose currency is unsupported or was retired from
+            // the explorer list; indexing the map would raise a PHP 8 warning
+            // and return a broken panel.
+            $currency = isset($wallet['currency']) ? $wallet['currency'] : '';
+            if (!isset($this->_currencies[$currency])) {
+                continue;
+            }
+
             // Exchange information
             $btcIndex = new FirstRally();
 

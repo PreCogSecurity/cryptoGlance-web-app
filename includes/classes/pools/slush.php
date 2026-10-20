@@ -17,7 +17,8 @@ class Pools_Slush extends Pools_Abstract {
     }
 
     public function update() {
-        if ($CACHED == false || $this->_fileHandler->lastTimeModified() >= 30) { // updates every 30 seconds
+        $cached = isset($GLOBALS['cached']) ? $GLOBALS['cached'] : true;
+        if ($cached == false || $this->_fileHandler->lastTimeModified() >= 30) { // updates every 30 seconds
             $poolData = array();
             $poolData['global'] = curlCall($this->_apiURL  . '/stats/json/'. $this->_apiKey);
             $poolData['user'] = curlCall($this->_apiURL  . '/accounts/profile/json/'. $this->_apiKey);

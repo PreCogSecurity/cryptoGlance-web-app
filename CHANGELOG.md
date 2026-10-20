@@ -1,4 +1,39 @@
 
+    [ Unreleased ]
+
+    SECURITY
+    ========
+    - Removed the hardcoded MobileMiner application key from source; it is now
+      read from the MOBILEMINER_API_KEY environment variable (see .env.example).
+    - Outbound HTTP(S) calls now verify TLS certificates by default. The old
+      unconditional opt-out is replaced by the explicit CG_INSECURE_TLS flag.
+    - ajax.php now routes through an explicit type/action allow-list instead of
+      instantiating any autoloaded class and invoking any caller-named method.
+    - ajax.php and debug.php reject cross-site (CSRF) requests.
+    - debug.php now requires an authenticated session and validates the
+      host/port it connects to; reflected input is HTML-encoded.
+    - Passwords are stored with password_hash() (bcrypt); legacy SHA-512
+      digests are upgraded transparently on the next successful login.
+    - Login is throttled after repeated failures (Login::MAX_FAILURES).
+    - Pool types are validated against shipped Pools_Abstract subclasses.
+    - FileHandler no longer creates world-writable (0777) files/directories.
+
+    FIXES
+    =====
+    - Division-by-zero in cgminer summary/device share percentages on miners
+      with no shares yet.
+    - formatHashrate() unit scale (1000 H/s is now "1 KH/s", not "1 MH/s").
+    - formatTimeElapsed(0) no longer leaves the format undefined.
+    - Rig actions fail gracefully when no rig is configured.
+    - Wallet panels skip currencies that are no longer supported.
+
+    ENGINEERING
+    ===========
+    - Added a PHPUnit test suite (composer test) and a real CI workflow that
+      lints, tests, scans for secrets, and validates docker-compose.
+    - Added composer.json/composer.lock, phpcs.xml, .env.example and a
+      runnable Dockerfile/docker-compose setup.
+
     [ v2.1 ]
 
     FEATURES

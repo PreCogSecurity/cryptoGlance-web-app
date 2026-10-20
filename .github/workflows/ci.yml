@@ -1,12 +1,98 @@
 name: CI
+
 on:
   push:
     branches: [main, master]
   pull_request:
     branches: [main, master]
+
+permissions:
+  contents: read
+
 jobs:
-  build:
+  lint:
+    name: Lint (php -l + phpcs)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: echo "Build steps TBD"
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, json, sockets
+          coverage: none
+
+      - name: Syntax check every PHP file
+        run: |
+          set -euo pipefail
+          find . -path ./vendor -prune -o -name '*.php' -print0 \
+            | xargs -0 -n1 -P4 php -l
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dev dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Coding-standard / security sniff
+        run: vendor/bin/phpcs
+
+  test:
+    name: Test (PHPUnit)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: curl, json, sockets
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-
+
+      - name: Install dev dependencies
+        run: composer install --no-interaction --no-progress --prefer-dist
+
+      - name: Run test suite
+        run: vendor/bin/phpunit --testdox
+
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fail on hardcoded credential literals
+        run: |
+          set -euo pipefail
+          # Any quoted 8+ char literal assigned to an api key / password /
+          # secret in first-party PHP is a build failure.
+          if grep -rInE "(api_?key|password|secret)[A-Za-z_]*[[:space:]]*=>?[[:space:]]*['\"][A-Za-z0-9+/_=-]{8,}['\"]" \
+              --include='*.php' \
+              --exclude-dir=vendor --exclude-dir=tests --exclude-dir=Michelf \
+              . ; then
+            echo "::error::Hardcoded credential literal detected in source."
+            exit 1
+          fi
+          echo "No hardcoded credential literals found."
+
+  compose:
+    name: Validate docker-compose
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate compose file
+        run: docker compose -f docker-compose.yml config

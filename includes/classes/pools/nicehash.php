@@ -54,7 +54,8 @@ class Pools_Nicehash extends Pools_Abstract {
     }
 
     public function update() {
-        if ($CACHED == false || $this->_fileHandler->lastTimeModified() >= 30) { // updates every 30 seconds
+        $cached = isset($GLOBALS['cached']) ? $GLOBALS['cached'] : true;
+        if ($cached == false || $this->_fileHandler->lastTimeModified() >= 30) { // updates every 30 seconds
             $poolData = array();
             $poolData['user'] = curlCall($this->_apiURL  . '/api?method=stats.provider&addr='. $this->_btcaddess);
             $poolData['global'] = curlCall($this->_apiURL  . '/api?method=stats.global.current');
